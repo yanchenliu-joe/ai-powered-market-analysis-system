@@ -28,8 +28,19 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
       RUN_ID: ${{ inputs.run_id }}
-      PUBLISH_AUTHORIZATION: ${{ inputs.publish_authorization }}
     steps:
+      - name: Mask runtime capabilities
+        env:
+          RAW_ACCESS_TOKEN: ${{ inputs.access_token }}
+          RAW_PUBLISH_AUTHORIZATION: ${{ inputs.publish_authorization }}
+        run: |
+          echo "::add-mask::$RAW_ACCESS_TOKEN"
+          echo "::add-mask::$RAW_PUBLISH_AUTHORIZATION"
+          {
+            echo "ACCESS_TOKEN=$RAW_ACCESS_TOKEN"
+            echo "PUBLISH_AUTHORIZATION=$RAW_PUBLISH_AUTHORIZATION"
+          } >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -42,8 +53,6 @@ jobs:
         run: python -m pip install -e ".[dev]"
 
       - name: Mark run running
-        env:
-          ACCESS_TOKEN: ${{ inputs.access_token }}
         run: |
           python -m src.live_run_publish \
             --run-id "$RUN_ID" \
@@ -53,8 +62,6 @@ jobs:
 
       - name: Execute Python pipeline
         id: analyze
-        env:
-          ACCESS_TOKEN: ${{ inputs.access_token }}
         run: |
           set +e
           python -m src.main \
@@ -66,8 +73,6 @@ jobs:
           echo "pipeline_exit=$code"
 
       - name: Publish run bundle
-        env:
-          ACCESS_TOKEN: ${{ inputs.access_token }}
         run: |
           python -m src.live_run_publish \
             --run-id "$RUN_ID" \
