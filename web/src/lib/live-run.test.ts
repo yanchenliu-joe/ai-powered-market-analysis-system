@@ -439,3 +439,97 @@ test("no report-history or bucket-listing endpoint", () => {
   );
   assert.equal(readFileSync(path.join(root, "src/lib/run-trigger.ts"), "utf8").includes("/reports"), false);
 });
+
+const PUBLIC_START_FAILURE = "Analysis could not be started. Please try again later.";
+const SECRET_LOG_MARKERS = [
+  "ghs_test",
+  "vercel_blob_rw_test",
+  "GITHUB_TOKEN",
+  "publish_authorization",
+  "finalize_nonce",
+  "VERCEL_OIDC_TOKEN",
+  "access_token",
+  "BLOB_READ_WRITE_TOKEN",
+];
+
+function captureErrors<T>(fn: () => Promise<T>): Promise<{
+  result: T;
+  logs: Array<{ message: string; details: unknown }>;
+}> {
+  const logs: Array<{ message: string; details: unknown }> = [];
+  const original = console.error;
+  console.error = (message?: unknown, details?: unknown) => {
+    logs.push({ message: String(message), details });
+  };
+  return fn()
+    .then((result) => ({ result, logs }))
+    .finally(() => {
+      console.error = original;
+    });
+}
+
+function assertSafeFailureLog(
+  logs: Array<{ message: string; details: unknown }>,
+  expectedMessage: string,
+  expectedError: string,
+) {
+  const match = logs.find((entry) => entry.message === expectedMessage);
+  assert.ok(match);
+  assert.equal(typeof match.details, "object");
+  const details = match.details as { runId?: string; error?: string };
+  assert.ok(details.runId);
+  assert.equal(details.error, expectedError);
+  const serialized = JSON.stringify(match);
+  for (const marker of SECRET_LOG_MARKERS) {
+    assert.equal(serialized.includes(marker), false, marker);
+  }
+}
+
+test("publish authorization failure logs a safe server error", async () => {
+  const store = new MemoryRunStore();
+  const { result, logs } = await captureErrors(() =>
+    executeRunTrigger({
+      env: configuredEnv,
+      store,
+      now,
+      createIds: () => ({ runId: "run-20260912-153422-a31f", token: tokenA() }),
+      issuePublishAuthorization: async () => {
+        throw new Error("APP_BASE_URL or Vercel URL is required to finalize a live run");
+      },
+      dispatch: async () => null,
+    }),
+  );
+  assert.equal(result.status, 502);
+  assert.equal(result.body.phase, "failure");
+  assert.equal(result.body.message, PUBLIC_START_FAILURE);
+  assert.equal(JSON.stringify(result.body).includes("APP_BASE_URL"), false);
+  assertSafeFailureLog(
+    logs,
+    "live_run publish authorization failed",
+    "APP_BASE_URL or Vercel URL is required to finalize a live run",
+  );
+});
+
+test("GitHub dispatch failure logs a safe server error", async () => {
+  const store = new MemoryRunStore();
+  const { result, logs } = await captureErrors(() =>
+    executeRunTrigger({
+      env: configuredEnv,
+      store,
+      now,
+      createIds: () => ({ runId: "run-20260912-153422-a31f", token: tokenA() }),
+      dispatch: async () => {
+        throw new Error("GitHub dispatch failed with status 403");
+      },
+    }),
+  );
+  assert.equal(result.status, 502);
+  assert.equal(result.body.phase, "failure");
+  assert.equal(result.body.message, PUBLIC_START_FAILURE);
+  assert.equal(JSON.stringify(result.body).includes("403"), false);
+  assertSafeFailureLog(
+    logs,
+    "live_run github dispatch failed",
+    "GitHub dispatch failed with status 403",
+  );
+});

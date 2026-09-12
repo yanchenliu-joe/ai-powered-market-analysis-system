@@ -275,7 +275,14 @@ export async function executeRunTrigger(
   try {
     const authorization = await issueAuth(runId, store, env, now);
     publishAuthorization = JSON.stringify(authorization);
-  } catch {
+  } catch (error) {
+    console.error("live_run publish authorization failed", {
+      runId,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown publish authorization error",
+    });
     await store.putText(
       analysisManifestKey(runId),
       JSON.stringify({
@@ -322,7 +329,14 @@ export async function executeRunTrigger(
         message: "Analysis typically takes a few minutes when a new daily run is required.",
       },
     };
-  } catch {
+  } catch (error) {
+    console.error("live_run github dispatch failed", {
+      runId,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown GitHub dispatch error",
+    });
     await store.putText(
       analysisManifestKey(runId),
       JSON.stringify({
