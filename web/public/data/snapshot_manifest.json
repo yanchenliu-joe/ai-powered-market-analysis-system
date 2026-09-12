@@ -1,0 +1,14 @@
+{
+  "artifacts": {
+    "breadth_timeseries": "breadth_timeseries.json",
+    "market_summary": "market_summary.json",
+    "quant_summary": "quant_summary.json",
+    "trend_timeseries": "trend_timeseries.json"
+  },
+  "as_of_date": "2026-09-11",
+  "generated_at": "2026-09-12T07:39:08.038337Z",
+  "interpretation_status": "available",
+  "quant_status": "success",
+  "run_id": "web-live-snapshot",
+  "schema_version": "1.0.0"
+}

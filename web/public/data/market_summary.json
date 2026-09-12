@@ -1,0 +1,386 @@
+{
+  "as_of_date": "2026-09-11",
+  "breadth_interpretation": {
+    "confidence": "high",
+    "evidence": [
+      {
+        "metric": "advancers",
+        "source_section": "breadth",
+        "value": 349
+      },
+      {
+        "metric": "decliners",
+        "source_section": "breadth",
+        "value": 152
+      },
+      {
+        "metric": "advance_decline_ratio",
+        "source_section": "breadth",
+        "value": 2.2960526315789473
+      },
+      {
+        "metric": "pct_above_200dma",
+        "source_section": "breadth",
+        "value": 58.517034068136276
+      },
+      {
+        "metric": "pct_above_50dma",
+        "source_section": "breadth",
+        "value": 38.12375249500998
+      },
+      {
+        "metric": "breadth_momentum_20d",
+        "source_section": "breadth",
+        "value": -30.476247504990027
+      }
+    ],
+    "summary": "Breadth participation is uneven. A majority of valid names are above the 200dma, but fewer are above the 50dma, and breadth momentum over 20 days is negative. The advance-decline ratio is positive, yet the breadth mix suggests participation has weakened on a shorter horizon."
+  },
+  "disclaimer": "This interpretation is limited to the supplied validated evidence pack and does not provide investment advice, forecasts, or trading recommendations.",
+  "evidence": [
+    {
+      "metric": "trend_regime",
+      "source_section": "spy_trend",
+      "value": "uptrend"
+    },
+    {
+      "metric": "distance_to_sma_50",
+      "source_section": "spy_trend",
+      "value": 0.009209603356331142
+    },
+    {
+      "metric": "distance_to_sma_200",
+      "source_section": "spy_trend",
+      "value": 0.07522559618143809
+    },
+    {
+      "metric": "pct_above_200dma",
+      "source_section": "breadth",
+      "value": 58.517034068136276
+    },
+    {
+      "metric": "pct_above_50dma",
+      "source_section": "breadth",
+      "value": 38.12375249500998
+    },
+    {
+      "metric": "breadth_momentum_20d",
+      "source_section": "breadth",
+      "value": -30.476247504990027
+    },
+    {
+      "metric": "XLE.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "positive_significant"
+    },
+    {
+      "metric": "XLF.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_not_significant"
+    },
+    {
+      "metric": "XLC.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLY.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLP.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLV.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLI.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLK.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLB.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLRE.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLU.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    }
+  ],
+  "evidence_used": [
+    {
+      "metric": "trend_regime",
+      "source_section": "spy_trend",
+      "value": "uptrend"
+    },
+    {
+      "metric": "distance_to_sma_50",
+      "source_section": "spy_trend",
+      "value": 0.009209603356331142
+    },
+    {
+      "metric": "distance_to_sma_200",
+      "source_section": "spy_trend",
+      "value": 0.07522559618143809
+    },
+    {
+      "metric": "pct_above_200dma",
+      "source_section": "breadth",
+      "value": 58.517034068136276
+    },
+    {
+      "metric": "pct_above_50dma",
+      "source_section": "breadth",
+      "value": 38.12375249500998
+    },
+    {
+      "metric": "breadth_momentum_20d",
+      "source_section": "breadth",
+      "value": -30.476247504990027
+    },
+    {
+      "metric": "XLE.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "positive_significant"
+    },
+    {
+      "metric": "XLF.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_not_significant"
+    },
+    {
+      "metric": "XLC.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLY.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLP.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLV.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLI.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLK.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLB.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLRE.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    },
+    {
+      "metric": "XLU.sensitivity_label",
+      "source_section": "sector_rate_sensitivity",
+      "value": "negative_significant"
+    }
+  ],
+  "executive_summary": "SPY is in an uptrend, but breadth participation is mixed and short-term breadth momentum is negative. Sector-rate sensitivity is broadly negative across most sectors, with XLE the only positive_significant sector and XLF not statistically significant.",
+  "generated_at": "2026-09-12T07:39:08.038337Z",
+  "key_confirmed_signals": [
+    "SPY is in an uptrend.",
+    "Breadth is stronger on the 200dma measure than on the 50dma measure.",
+    "Breadth momentum over 20 days is negative.",
+    "Most sector-rate relationships are negative_significant.",
+    "XLE is the only positive_significant sector-rate relationship in the pack."
+  ],
+  "key_uncertainties": [
+    "The breadth series may be affected by survivorship bias because it uses the current S&P 500 constituent universe.",
+    "Sector regressions describe statistical association, not causation.",
+    "Daily one-factor sector regressions omit other market and macroeconomic factors.",
+    "XLF is negative_not_significant, so its rate relationship is not statistically confirmed in this pack."
+  ],
+  "market_participation": "Participation is uneven: 58.5% of valid names are above the 200dma, but only 38.1% are above the 50dma, and 20-day breadth momentum is negative.",
+  "market_regime_summary": {
+    "confidence": "high",
+    "evidence": [
+      {
+        "metric": "trend_regime",
+        "source_section": "spy_trend",
+        "value": "uptrend"
+      },
+      {
+        "metric": "distance_to_sma_50",
+        "source_section": "spy_trend",
+        "value": 0.009209603356331142
+      },
+      {
+        "metric": "distance_to_sma_200",
+        "source_section": "spy_trend",
+        "value": 0.07522559618143809
+      },
+      {
+        "metric": "pct_above_200dma",
+        "source_section": "breadth",
+        "value": 58.517034068136276
+      },
+      {
+        "metric": "pct_above_50dma",
+        "source_section": "breadth",
+        "value": 38.12375249500998
+      },
+      {
+        "metric": "breadth_momentum_20d",
+        "source_section": "breadth",
+        "value": -30.476247504990027
+      }
+    ],
+    "summary": "The validated snapshot shows an uptrend in SPY with price above the 50-day and 200-day moving averages, while breadth is mixed: more names are above the 200dma than the 50dma, but short-term breadth momentum is negative. Sector-rate sensitivity is broadly negative across most sectors and positive only for energy, indicating that the validated rate exposure is not uniform across the market."
+  },
+  "model": "gpt-5.4-mini",
+  "rates_and_sectors_interpretation": {
+    "confidence": "high",
+    "evidence": [
+      {
+        "metric": "XLC.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLY.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLP.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLE.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "positive_significant"
+      },
+      {
+        "metric": "XLF.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_not_significant"
+      },
+      {
+        "metric": "XLV.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLI.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLK.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLB.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLRE.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      },
+      {
+        "metric": "XLU.sensitivity_label",
+        "source_section": "sector_rate_sensitivity",
+        "value": "negative_significant"
+      }
+    ],
+    "summary": "The sector-rate sensitivity results show statistically significant negative associations for XLC, XLY, XLP, XLV, XLI, XLK, XLB, XLRE, and XLU, and a statistically significant positive association for XLE. XLF is negative but not significant. This indicates that the validated rate exposure differs materially by sector, with energy the only sector showing a positive significant relationship in this pack."
+  },
+  "reason": null,
+  "risk_flags": [
+    "Negative_significant rate sensitivity is present across multiple sectors, including XLY, XLK, XLI, XLRE, and XLU.",
+    "Breadth momentum is negative despite the broader uptrend.",
+    "Breadth data may be subject to survivorship bias.",
+    "Sector-rate results are one-factor associations and may omit other drivers."
+  ],
+  "risks_and_limitations": "Breadth may be affected by survivorship bias because the current S&P 500 constituent universe is used. Sector regressions estimate statistical association, not causation, and the one-factor setup omits other market and macroeconomic factors. XLF is not statistically significant in this pack.",
+  "run_id": "web-live-snapshot",
+  "sector_rate_risk": "Validated sector-rate exposure is mostly negative_significant across sectors, with XLE positive_significant and XLF negative_not_significant. This indicates heterogeneous sector sensitivity to rates within the pack.",
+  "status": "available",
+  "trend_conditions": "The validated trend regime is uptrend. SPY is above the 50dma and 200dma, while remaining slightly below the 20dma.",
+  "trend_interpretation": {
+    "confidence": "high",
+    "evidence": [
+      {
+        "metric": "trend_regime",
+        "source_section": "spy_trend",
+        "value": "uptrend"
+      },
+      {
+        "metric": "adjusted_close",
+        "source_section": "spy_trend",
+        "value": 765.6300048828125
+      },
+      {
+        "metric": "sma_20",
+        "source_section": "spy_trend",
+        "value": 766.94599609375
+      },
+      {
+        "metric": "sma_50",
+        "source_section": "spy_trend",
+        "value": 758.6432019042969
+      },
+      {
+        "metric": "sma_200",
+        "source_section": "spy_trend",
+        "value": 712.0645263671875
+      },
+      {
+        "metric": "distance_to_sma_20",
+        "source_section": "spy_trend",
+        "value": -0.0017158851048706403
+      },
+      {
+        "metric": "distance_to_sma_50",
+        "source_section": "spy_trend",
+        "value": 0.009209603356331142
+      },
+      {
+        "metric": "distance_to_sma_200",
+        "source_section": "spy_trend",
+        "value": 0.07522559618143809
+      }
+    ],
+    "summary": "SPY is in an uptrend and sits above both the 50dma and 200dma. The distance to the 20dma is slightly negative, which is consistent with a modest pullback inside the broader uptrend rather than a breakdown in the validated trend regime."
+  }
+}

@@ -1,0 +1,4 @@
+date,ticker,adjusted_close
+2024-01-02,ZERO,0
+2024-01-02,NEGATIVE,-10
+2024-01-02,TEXT,not-a-number
