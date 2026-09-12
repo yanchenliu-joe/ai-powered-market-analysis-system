@@ -11,6 +11,10 @@ on:
         description: Opaque capability token (do not print)
         required: true
         type: string
+      publish_authorization:
+        description: Short-lived run-scoped Blob upload capability (do not print)
+        required: true
+        type: string
 
 concurrency:
   group: market-analysis-run
@@ -23,8 +27,8 @@ jobs:
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
-      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
       RUN_ID: ${{ inputs.run_id }}
+      PUBLISH_AUTHORIZATION: ${{ inputs.publish_authorization }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

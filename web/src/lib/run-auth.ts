@@ -1,5 +1,9 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 
+import { blobStoreReady } from "./blob-auth.ts";
+
+export { blobStoreReady };
+
 function digest(value: string): Buffer {
   return createHash("sha256").update(value).digest();
 }
@@ -27,10 +31,6 @@ export function isGithubDispatchConfigured(env: NodeJS.ProcessEnv = process.env)
 
 export function githubDispatchReady(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(env.GITHUB_TOKEN && env.GITHUB_REPOSITORY);
-}
-
-export function blobStoreReady(env: NodeJS.ProcessEnv = process.env): boolean {
-  return Boolean(env.BLOB_READ_WRITE_TOKEN);
 }
 
 export function liveRunInfrastructureReady(

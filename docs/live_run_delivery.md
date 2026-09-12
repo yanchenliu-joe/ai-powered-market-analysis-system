@@ -42,6 +42,7 @@ control/active_run.json
 control/daily_quota.json
 control/reusable_daily.json
 control/cooldowns/<hashed_client>.json
+control/finalize/<run_id>.json
 ```
 
 Completed analysis objects are immutable. Aliases only reference them.
@@ -95,6 +96,22 @@ Server-only, never `NEXT_PUBLIC`:
 Quota counts **new pipeline executions**, not visitors. Reuse and join-active
 do not consume quota or cooldown.
 
+## Production environment
+
+Vercel (server-only):
+
+- `GITHUB_TOKEN`, `GITHUB_REPOSITORY`
+- `BLOB_STORE_ID` from the connected private Blob store (OIDC at runtime)
+- optional `GITHUB_REF`, `GITHUB_WORKFLOW`
+- `APP_BASE_URL` (production origin for the worker finalize callback)
+- `PUBLIC_RUN_COOLDOWN_SECONDS`, `PUBLIC_RUN_DAILY_QUOTA`, `REPORT_ACCESS_TTL_SECONDS`
+- optional `CLIENT_HASH_SALT`, `RUN_ANALYSIS_SECRET`
+
+`BLOB_READ_WRITE_TOKEN` is optional local/dev fallback only. It is not required
+on Vercel when the store is connected with OIDC.
+
+GitHub Actions secrets: `OPENAI_API_KEY`, optional `OPENAI_MODEL`.
+
 ## Abuse controls
 
 - hashed per-client cooldown for expensive new runs
@@ -129,9 +146,23 @@ is not required for public use.
 
 ## GitHub Actions
 
-New computation only. Inputs remain `run_id` and `access_token`. Publish writes
-`analysis/<run_id>/` plus the triggering alias and `control/reusable_daily.json`.
+New computation only. Inputs are `run_id`, `access_token`, and a short-lived
+`publish_authorization` created by the Vercel server with
+`@vercel/blob` `issueSignedToken` + `presignUrl`.
+
+The worker may PUT only `analysis/<run_id>/` artifacts listed in that
+authorization. It does not receive `BLOB_READ_WRITE_TOKEN`, Vercel account
+credentials, or write access to `control/` or `access/`.
+
+After artifact upload, the worker calls `POST /api/internal/finalize-run` with
+the one-time finalize nonce. Vercel uses OIDC to write
+`control/reusable_daily.json` (success/partial) and release
+`control/active_run.json`. The visitor alias is created at queue time.
+
 `--export-web-snapshot` is not used.
+
+GitHub Secrets required for Actions: `OPENAI_API_KEY`, optional `OPENAI_MODEL`.
+Do not store a Blob master token in GitHub.
 
 ## Static snapshot
 

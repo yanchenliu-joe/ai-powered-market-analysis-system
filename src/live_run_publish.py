@@ -6,10 +6,9 @@ import argparse
 import json
 import os
 import urllib.error
-import urllib.parse
 import urllib.request
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -32,8 +31,14 @@ SECRET_MARKERS = (
     "GITHUB_TOKEN",
     "BLOB_READ_WRITE_TOKEN",
 )
-BLOB_API = "https://blob.vercel-storage.com"
 PUBLIC_DATA = Path("web") / "public" / "data"
+ALLOWED_UPLOAD_FILES = frozenset(
+    (
+        "manifest.json",
+        *REQUIRED_FILES.values(),
+        *OPTIONAL_FILES,
+    )
+)
 
 
 class LiveRunPublishError(RuntimeError):
@@ -148,27 +153,57 @@ def read_as_of_date(bundle_dir: Path) -> str | None:
     return None
 
 
+def load_publish_authorization(raw: str | None) -> dict[str, Any]:
+    if not raw:
+        raise LiveRunPublishError("PUBLISH_AUTHORIZATION is required")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise LiveRunPublishError("PUBLISH_AUTHORIZATION is invalid") from error
+    if payload.get("schema_version") != "1.0.0":
+        raise LiveRunPublishError("unsupported publish authorization")
+    if not isinstance(payload.get("run_id"), str):
+        raise LiveRunPublishError("publish authorization is missing run_id")
+    if not isinstance(payload.get("uploads"), dict):
+        raise LiveRunPublishError("publish authorization is missing uploads")
+    valid_until = payload.get("valid_until")
+    expiry_ms = datetime.now(UTC).timestamp() * 1000
+    if isinstance(valid_until, (int, float)) and valid_until <= expiry_ms:
+        raise LiveRunPublishError("publish authorization has expired")
+    return payload
+
+
+def assert_run_scoped_pathname(run_id: str, pathname: str) -> None:
+    prefix = f"analysis/{run_id}/"
+    if not pathname.startswith(prefix) or ".." in pathname:
+        raise LiveRunPublishError("publish path is outside the current run prefix")
+    name = pathname[len(prefix) :]
+    if name not in ALLOWED_UPLOAD_FILES or "/" in name:
+        raise LiveRunPublishError("publish path is not an allowed run artifact")
+
+
+def resolve_upload_url(pathname: str, authorization: dict[str, Any]) -> str:
+    assert_run_scoped_pathname(str(authorization["run_id"]), pathname)
+    url = authorization["uploads"].get(pathname)
+    if not isinstance(url, str) or not url:
+        raise LiveRunPublishError(f"no upload capability for {pathname.split('/')[-1]}")
+    return url
+
+
 def blob_put(
     pathname: str,
     body: bytes,
     content_type: str,
-    token: str,
+    authorization: dict[str, Any],
     *,
     opener: Callable[..., object] = urllib.request.urlopen,
 ) -> None:
-    query = urllib.parse.urlencode({"pathname": pathname})
+    url = resolve_upload_url(pathname, authorization)
     request = urllib.request.Request(
-        f"{BLOB_API}/?{query}",
+        url,
         data=body,
         method="PUT",
-        headers={
-            "authorization": f"Bearer {token}",
-            "x-api-version": "7",
-            "x-vercel-blob-access": "private",
-            "x-add-random-suffix": "0",
-            "x-allow-overwrite": "1",
-            "x-content-type": content_type,
-        },
+        headers={"content-type": content_type},
     )
     try:
         with opener(request, timeout=60):
@@ -179,28 +214,40 @@ def blob_put(
         ) from error
 
 
-def blob_get_text(
-    pathname: str,
-    token: str,
+def finalize_run(
+    authorization: dict[str, Any],
+    manifest: dict[str, Any],
     *,
     opener: Callable[..., object] = urllib.request.urlopen,
-) -> str | None:
-    query = urllib.parse.urlencode({"pathname": pathname})
+) -> None:
+    finalize_url = authorization.get("finalize_url")
+    nonce = authorization.get("finalize_nonce")
+    if not isinstance(finalize_url, str) or not isinstance(nonce, str):
+        raise LiveRunPublishError(
+            "publish authorization is missing finalize capability"
+        )
+    body = json.dumps(
+        {
+            "run_id": authorization["run_id"],
+            "finalize_nonce": nonce,
+            "status": manifest["status"],
+            "message": manifest.get("message"),
+            "as_of_date": manifest.get("as_of_date"),
+            "interpretation_status": manifest.get("interpretation_status"),
+            "artifacts": manifest.get("artifacts"),
+        }
+    ).encode("utf-8")
     request = urllib.request.Request(
-        f"{BLOB_API}/get?{query}",
-        method="GET",
-        headers={
-            "authorization": f"Bearer {token}",
-            "x-api-version": "7",
-        },
+        finalize_url,
+        data=body,
+        method="POST",
+        headers={"content-type": "application/json"},
     )
     try:
-        with opener(request, timeout=30) as response:
-            return response.read().decode("utf-8")
-    except urllib.error.HTTPError:
-        return None
-    except OSError:
-        return None
+        with opener(request, timeout=30):
+            return
+    except urllib.error.HTTPError as error:
+        raise LiveRunPublishError("finalize callback failed") from error
 
 
 def content_type_for(name: str) -> str:
@@ -218,7 +265,7 @@ def content_type_for(name: str) -> str:
 def write_manifest_object(
     run_id: str,
     manifest: dict[str, Any],
-    token: str,
+    authorization: dict[str, Any],
     *,
     opener: Callable[..., object] = urllib.request.urlopen,
 ) -> None:
@@ -228,66 +275,7 @@ def write_manifest_object(
         f"analysis/{run_id}/manifest.json",
         payload.encode("utf-8"),
         "application/json",
-        token,
-        opener=opener,
-    )
-
-
-def write_access_alias(
-    access_token: str,
-    run_id: str,
-    token: str,
-    *,
-    opener: Callable[..., object] = urllib.request.urlopen,
-) -> None:
-    created = utc_now()
-    expires = (
-        (datetime.now(UTC) + timedelta(days=7))
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    payload = json.dumps(
-        {
-            "schema_version": "1.0.0",
-            "analysis_id": run_id,
-            "source_run_id": run_id,
-            "created_at": created,
-            "expires_at": expires,
-            "reused": False,
-        }
-    )
-    assert_no_secrets(payload)
-    blob_put(
-        f"access/{access_token}.json",
-        payload.encode("utf-8"),
-        "application/json",
-        token,
-        opener=opener,
-    )
-
-
-def write_reusable_daily(
-    manifest: dict[str, Any],
-    token: str,
-    *,
-    opener: Callable[..., object] = urllib.request.urlopen,
-) -> None:
-    payload = json.dumps(
-        {
-            "as_of_date": manifest.get("as_of_date"),
-            "source_run_id": manifest["run_id"],
-            "analysis_id": manifest["run_id"],
-            "generated_at": manifest.get("updated_at") or utc_now(),
-            "status": manifest["status"],
-        }
-    )
-    assert_no_secrets(payload)
-    blob_put(
-        "control/reusable_daily.json",
-        payload.encode("utf-8"),
-        "application/json",
-        token,
+        authorization,
         opener=opener,
     )
 
@@ -295,7 +283,7 @@ def write_reusable_daily(
 def upload_bundle(
     run_id: str,
     bundle_dir: Path,
-    token: str,
+    authorization: dict[str, Any],
     *,
     opener: Callable[..., object] = urllib.request.urlopen,
 ) -> None:
@@ -315,24 +303,9 @@ def upload_bundle(
             f"analysis/{run_id}/{name}",
             data,
             content_type_for(name),
-            token,
+            authorization,
             opener=opener,
         )
-
-
-def release_lock(
-    token: str,
-    *,
-    opener: Callable[..., object] = urllib.request.urlopen,
-) -> None:
-    payload = json.dumps({"active": False, "updated_at": utc_now()})
-    blob_put(
-        "control/active_run.json",
-        payload.encode("utf-8"),
-        "application/json",
-        token,
-        opener=opener,
-    )
 
 
 def publish(
@@ -341,11 +314,15 @@ def publish(
     access_token: str,
     bundle_dir: Path | None,
     pipeline_exit: int,
-    blob_token: str,
+    authorization: dict[str, Any],
     existing: dict[str, Any] | None = None,
     opener: Callable[..., object] = urllib.request.urlopen,
 ) -> dict[str, Any]:
-    created_at = existing["created_at"] if existing else utc_now()
+    created_at = (
+        existing["created_at"]
+        if existing
+        else authorization.get("created_at") or utc_now()
+    )
     if pipeline_exit == 1 or bundle_dir is None or not bundle_dir.is_dir():
         manifest = new_manifest(
             run_id,
@@ -354,9 +331,8 @@ def publish(
             message="Quantitative analysis failed.",
         )
         manifest["updated_at"] = utc_now()
-        write_manifest_object(run_id, manifest, blob_token, opener=opener)
-        write_access_alias(access_token, run_id, blob_token, opener=opener)
-        release_lock(blob_token, opener=opener)
+        write_manifest_object(run_id, manifest, authorization, opener=opener)
+        finalize_run(authorization, manifest, opener=opener)
         return manifest
 
     artifacts = inspect_bundle(bundle_dir)
@@ -373,10 +349,10 @@ def publish(
         artifacts=artifacts,
     )
     publishing["updated_at"] = utc_now()
-    write_manifest_object(run_id, publishing, blob_token, opener=opener)
+    write_manifest_object(run_id, publishing, authorization, opener=opener)
     try:
         if status != "failure":
-            upload_bundle(run_id, bundle_dir, blob_token, opener=opener)
+            upload_bundle(run_id, bundle_dir, authorization, opener=opener)
         final = new_manifest(
             run_id,
             status=status,
@@ -387,11 +363,8 @@ def publish(
             artifacts=artifacts,
         )
         final["updated_at"] = utc_now()
-        write_manifest_object(run_id, final, blob_token, opener=opener)
-        write_access_alias(access_token, run_id, blob_token, opener=opener)
-        if status in {"success", "partial"}:
-            write_reusable_daily(final, blob_token, opener=opener)
-        release_lock(blob_token, opener=opener)
+        write_manifest_object(run_id, final, authorization, opener=opener)
+        finalize_run(authorization, final, opener=opener)
         return final
     except LiveRunPublishError as error:
         failed = new_manifest(
@@ -405,7 +378,8 @@ def publish(
         )
         failed["updated_at"] = utc_now()
         try:
-            write_manifest_object(run_id, failed, blob_token, opener=opener)
+            write_manifest_object(run_id, failed, authorization, opener=opener)
+            finalize_run(authorization, failed, opener=opener)
         except LiveRunPublishError:
             pass
         return failed
@@ -428,27 +402,29 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    blob_token = os.environ.get("BLOB_READ_WRITE_TOKEN")
-    if not blob_token:
-        print("BLOB_READ_WRITE_TOKEN is required", flush=True)
+    try:
+        authorization = load_publish_authorization(
+            os.environ.get("PUBLISH_AUTHORIZATION")
+        )
+    except LiveRunPublishError as error:
+        print(str(error), flush=True)
         return 1
-    existing_text = blob_get_text(
-        f"analysis/{args.run_id}/manifest.json",
-        blob_token,
-    )
-    existing = json.loads(existing_text) if existing_text else None
+    if authorization["run_id"] != args.run_id:
+        print("publish authorization run_id does not match", flush=True)
+        return 1
+    existing = {
+        "created_at": authorization.get("created_at") or utc_now(),
+    }
     if args.set_status:
-        created = existing["created_at"] if existing else utc_now()
+        created = existing["created_at"]
         manifest = new_manifest(
             args.run_id,
             status=args.set_status,
             created_at=created,
             message=args.message,
-            as_of_date=existing.get("as_of_date") if existing else None,
-            artifacts=existing.get("artifacts") if existing else None,
         )
         manifest["updated_at"] = utc_now()
-        write_manifest_object(args.run_id, manifest, blob_token)
+        write_manifest_object(args.run_id, manifest, authorization)
         print(
             f"manifest status={args.set_status} run_id={args.run_id} "
             f"token={redact_token(args.access_token)}",
@@ -461,7 +437,7 @@ def main(argv: list[str] | None = None) -> int:
         access_token=args.access_token,
         bundle_dir=bundle,
         pipeline_exit=args.pipeline_exit,
-        blob_token=blob_token,
+        authorization=authorization,
         existing=existing,
     )
     print(

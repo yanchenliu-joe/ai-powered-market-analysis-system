@@ -20,6 +20,13 @@ def test_workflow_executes_pipeline_and_bundle_export() -> None:
     assert "web/public/data" not in text
     assert "python -m src.live_run_publish" in text
     assert "OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}" in text
-    assert "BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}" in text
+    assert "BLOB_READ_WRITE_TOKEN" not in text
+    assert "publish_authorization:" in text
+    assert "PUBLISH_AUTHORIZATION: ${{ inputs.publish_authorization }}" in text
     assert "run_id:" in text
     assert "access_token:" in text
+    assert all(
+        "publish_authorization" not in line
+        for line in text.splitlines()
+        if "echo" in line.lower()
+    )

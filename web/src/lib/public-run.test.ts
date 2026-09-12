@@ -33,6 +33,8 @@ test("Start Analysis works without a secret", () => {
   assert.match(modal, /JSON\.stringify\(\{\}\)/);
   assert.equal(publicRoute.includes("payload.secret"), false);
   assert.equal(publicRoute.includes("RUN_ANALYSIS_SECRET"), false);
+  assert.equal(publicRoute.includes("publish_authorization"), false);
+  assert.equal(publicRoute.includes("finalize_nonce"), false);
   assert.match(publicRoute, /executeRunTrigger/);
 });
 

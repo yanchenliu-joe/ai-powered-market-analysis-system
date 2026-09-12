@@ -1,9 +1,10 @@
 import { get, put } from "@vercel/blob";
 
+import { type BlobAuth, blobCommandOptions } from "./blob-auth.ts";
 import type { RunObjectStore } from "./run-store.ts";
 
 export class VercelBlobStore implements RunObjectStore {
-  constructor(private readonly token: string) {}
+  constructor(private readonly auth: BlobAuth) {}
 
   async getText(key: string): Promise<string | null> {
     const bytes = await this.getBytes(key);
@@ -17,8 +18,8 @@ export class VercelBlobStore implements RunObjectStore {
     try {
       const result = await get(key, {
         access: "private",
-        token: this.token,
         useCache: false,
+        ...blobCommandOptions(this.auth),
       });
       if (!result || !("stream" in result) || !result.stream) {
         return null;
@@ -40,7 +41,7 @@ export class VercelBlobStore implements RunObjectStore {
       addRandomSuffix: false,
       allowOverwrite: true,
       contentType,
-      token: this.token,
+      ...blobCommandOptions(this.auth),
     });
   }
 
@@ -54,11 +55,11 @@ export class VercelBlobStore implements RunObjectStore {
       addRandomSuffix: false,
       allowOverwrite: true,
       contentType,
-      token: this.token,
+      ...blobCommandOptions(this.auth),
     });
   }
 }
 
-export function createVercelBlobStore(token: string): VercelBlobStore {
-  return new VercelBlobStore(token);
+export function createVercelBlobStore(auth: BlobAuth): VercelBlobStore {
+  return new VercelBlobStore(auth);
 }

@@ -15,14 +15,21 @@ import {
   readDailyQuota,
   writeCooldown,
 } from "./run-quota.ts";
+import { createRunPublishAuthorization } from "./run-publish-auth.ts";
 import { analysisManifestKey, type RunObjectStore } from "./run-store.ts";
+
+export interface GithubDispatchInputs {
+  run_id: string;
+  access_token: string;
+  publish_authorization: string;
+}
 
 export interface GithubDispatch {
   (
     repository: string,
     token: string,
     workflow: string,
-    inputs: { run_id: string; access_token: string },
+    inputs: GithubDispatchInputs,
   ): Promise<number | null>;
 }
 
@@ -34,6 +41,7 @@ export interface RunTriggerInput {
   forceRefresh?: boolean;
   createIds?: () => { runId?: string; token: string };
   dispatch?: GithubDispatch;
+  issuePublishAuthorization?: typeof createRunPublishAuthorization;
 }
 
 function unconfigured(): { status: number; body: RunAnalysisResponse } {
@@ -51,7 +59,7 @@ async function defaultDispatch(
   repository: string,
   token: string,
   workflow: string,
-  inputs: { run_id: string; access_token: string },
+  inputs: GithubDispatchInputs,
   env: NodeJS.ProcessEnv,
 ): Promise<number | null> {
   const response = await fetch(
@@ -82,12 +90,8 @@ async function resolveStore(
   if (input.store) {
     return input.store;
   }
-  const token = env.BLOB_READ_WRITE_TOKEN;
-  if (!token) {
-    return null;
-  }
-  const { createVercelBlobStore } = await import("./vercel-blob-store.ts");
-  return createVercelBlobStore(token);
+  const { createServerRunStore } = await import("./run-server-store.ts");
+  return createServerRunStore(env);
 }
 
 function readyResponse(
@@ -243,10 +247,61 @@ export async function executeRunTrigger(
     ((repo, ghToken, file, inputs) =>
       defaultDispatch(repo, ghToken, file, inputs, env));
 
+  const issueAuth =
+    input.issuePublishAuthorization ??
+    (input.store
+      ? async (id, target, issueEnv, issueNow) => {
+          const source = issueEnv ?? process.env;
+          return createRunPublishAuthorization(
+            id,
+            target,
+            {
+              ...source,
+              APP_BASE_URL: source.APP_BASE_URL || "https://example.test",
+            } as unknown as NodeJS.ProcessEnv,
+            issueNow,
+            async (_run, pathnames) => {
+              const uploads: Record<string, string> = {};
+              for (const pathname of pathnames) {
+                uploads[pathname] = `https://example.test/put/${pathname}`;
+              }
+              return uploads;
+            },
+          );
+        }
+      : createRunPublishAuthorization);
+
+  let publishAuthorization: string;
+  try {
+    const authorization = await issueAuth(runId, store, env, now);
+    publishAuthorization = JSON.stringify(authorization);
+  } catch {
+    await store.putText(
+      analysisManifestKey(runId),
+      JSON.stringify({
+        ...manifest,
+        status: "failure",
+        updated_at: isoNow(now),
+        message: "Analysis dispatch failed.",
+      }),
+    );
+    await releaseLock(store, now);
+    return {
+      status: 502,
+      body: {
+        phase: "failure",
+        configured: true,
+        reused: false,
+        message: "Analysis could not be started. Please try again later.",
+      },
+    };
+  }
+
   try {
     const githubRunId = await dispatch(repository, githubToken, workflow, {
       run_id: runId,
       access_token: token,
+      publish_authorization: publishAuthorization,
     });
     console.info("live_run queued", {
       runId,

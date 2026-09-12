@@ -104,7 +104,11 @@ test("unconfigured infrastructure fails safely without a password", async () => 
 
 test("trigger generates distinct run_id and access_token", async () => {
   const store = new MemoryRunStore();
-  const dispatched: Array<{ run_id: string; access_token: string }> = [];
+  const dispatched: Array<{
+    run_id: string;
+    access_token: string;
+    publish_authorization: string;
+  }> = [];
   const result = await executeRunTrigger({
     env: configuredEnv,
     store,
@@ -123,6 +127,24 @@ test("trigger generates distinct run_id and access_token", async () => {
   assert.match(result.body.runId ?? "", /^run-\d{8}-\d{6}-[a-f0-9]{4}$/);
   assert.match(result.body.token ?? "", ACCESS_TOKEN_PATTERN);
   assert.equal(dispatched.length, 1);
+  const authorization = JSON.parse(dispatched[0].publish_authorization) as {
+    run_id: string;
+    valid_until: number;
+    uploads: Record<string, string>;
+    finalize_nonce: string;
+  };
+  assert.equal(authorization.run_id, result.body.runId);
+  assert.ok(authorization.valid_until > now.getTime());
+  assert.ok(
+    Object.keys(authorization.uploads).every((key) =>
+      key.startsWith(`analysis/${result.body.runId}/`),
+    ),
+  );
+  assert.equal("BLOB_READ_WRITE_TOKEN" in dispatched[0], false);
+  assert.equal("publish_authorization" in result.body, false);
+  assert.equal("finalize_nonce" in result.body, false);
+  assert.equal(JSON.stringify(result.body).includes("example.test/put"), false);
+  assert.ok(authorization.finalize_nonce);
 });
 
 test("access token is cryptographically strong", () => {

@@ -8,12 +8,19 @@ from email.message import Message
 from pathlib import Path
 from urllib.error import HTTPError
 
+import pytest
+
 from src.live_run_publish import (
+    ALLOWED_UPLOAD_FILES,
+    LiveRunPublishError,
+    assert_run_scoped_pathname,
     decide_status,
     inspect_bundle,
+    load_publish_authorization,
     new_manifest,
     publish,
     redact_token,
+    resolve_upload_url,
 )
 from src.web_export import (
     BREADTH_FILENAME,
@@ -38,6 +45,22 @@ def _bundle(
     if pdf:
         (target / PDF_FILENAME).write_bytes(b"%PDF-1.4")
     return target
+
+
+def _authorization(run_id: str = "run-test") -> dict:
+    uploads = {
+        f"analysis/{run_id}/{name}": f"https://blob.example.test/{name}"
+        for name in ALLOWED_UPLOAD_FILES
+    }
+    return {
+        "schema_version": "1.0.0",
+        "run_id": run_id,
+        "created_at": "2026-09-12T00:00:00Z",
+        "valid_until": 9_999_999_999_999,
+        "uploads": uploads,
+        "finalize_url": "https://app.example.test/api/internal/finalize-run",
+        "finalize_nonce": "nonce-test",
+    }
 
 
 class _FakeResponse(io.BytesIO):
@@ -91,20 +114,17 @@ def test_publish_success_uploads_then_releases_lock(tmp_path: Path) -> None:
         access_token="a" * 64,
         bundle_dir=_bundle(tmp_path),
         pipeline_exit=0,
-        blob_token="blob-token",
+        authorization=_authorization(),
         existing={"created_at": "2026-09-12T00:00:00Z"},
         opener=opener,
     )
     assert result["status"] == "success"
     joined = "".join(uploaded)
-    assert (
-        "analysis%2Frun-test%2Fmanifest.json" in joined
-        or "analysis/run-test/manifest.json" in joined
-    )
-    assert "control%2Factive_run.json" in joined or "control/active_run.json" in joined
-    assert "reusable_daily" in joined
-    assert "access" in joined
     assert "quant_summary.json" in joined
+    assert "finalize-run" in joined
+    assert "control/active_run.json" not in joined
+    assert "reusable_daily" not in joined
+    assert "access/" not in joined
 
 
 def test_publish_failure_skips_fabricated_report(tmp_path: Path) -> None:
@@ -119,7 +139,7 @@ def test_publish_failure_skips_fabricated_report(tmp_path: Path) -> None:
         access_token="b" * 64,
         bundle_dir=tmp_path / "missing",
         pipeline_exit=1,
-        blob_token="blob-token",
+        authorization=_authorization(),
         opener=opener,
     )
     assert result["status"] == "failure"
@@ -137,7 +157,7 @@ def test_upload_error_does_not_claim_success(tmp_path: Path) -> None:
         access_token="c" * 64,
         bundle_dir=_bundle(tmp_path),
         pipeline_exit=0,
-        blob_token="blob-token",
+        authorization=_authorization(),
         existing={"created_at": "2026-09-12T00:00:00Z"},
         opener=opener,
     )
@@ -150,3 +170,23 @@ def test_redact_token() -> None:
     redacted = redact_token(token)
     assert token not in redacted
     assert redacted.startswith("aaaa")
+
+
+def test_authorization_cannot_target_another_run() -> None:
+    auth = _authorization("run-a")
+    with pytest.raises(LiveRunPublishError, match="outside the current run prefix"):
+        assert_run_scoped_pathname("run-a", "analysis/run-b/manifest.json")
+    with pytest.raises(LiveRunPublishError, match="outside"):
+        resolve_upload_url("analysis/run-b/manifest.json", auth)
+
+
+def test_missing_publish_authorization_fails_closed() -> None:
+    with pytest.raises(LiveRunPublishError, match="required"):
+        load_publish_authorization(None)
+
+
+def test_expired_publish_authorization_fails_closed() -> None:
+    payload = _authorization()
+    payload["valid_until"] = 1
+    with pytest.raises(LiveRunPublishError, match="expired"):
+        load_publish_authorization(json.dumps(payload))
