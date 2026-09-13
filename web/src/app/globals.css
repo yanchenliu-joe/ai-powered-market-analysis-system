@@ -555,9 +555,9 @@ details summary {
 
 .navbar-brand-logo {
   display: block;
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   object-fit: contain;
   border: 0;
   border-radius: 0;
@@ -1921,9 +1921,9 @@ th {
   }
 
   .navbar-brand-logo {
-    width: 21px;
-    height: 21px;
-    flex-basis: 21px;
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
   }
 
   .navbar-links {

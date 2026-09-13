@@ -49,8 +49,8 @@ export function Navbar({
             className="navbar-brand-logo"
             src="/brand/market-analysis-logo.png"
             alt=""
-            width={24}
-            height={24}
+            width={32}
+            height={32}
           />
           AI-Powered Market Analysis
         </Link>
