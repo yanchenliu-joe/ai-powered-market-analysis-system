@@ -11,9 +11,21 @@
 </p>
 
 <p align="center">
-  <a href="https://ai-powered-market-analysis.vercel.app"><strong>Live product</strong></a>
-  &nbsp;·&nbsp;
-  <a href="https://ai-powered-market-analysis.vercel.app">ai-powered-market-analysis.vercel.app</a>
+  <a href="https://ai-powered-market-analysis.vercel.app">
+    <img
+      src="docs/readme/live-product.png"
+      alt="Open live product"
+      height="56"
+    />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/yanchenliu-joe/ai-powered-market-analysis-system">
+    <img
+      src="docs/readme/source-code.png"
+      alt="View source code"
+      height="56"
+    />
+  </a>
 </p>
 
 <p align="center">
