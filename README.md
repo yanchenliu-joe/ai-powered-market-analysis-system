@@ -1,457 +1,347 @@
-# AI-Powered Market Analysis System
+<p align="center">
+  <img src="web/public/brand/market-analysis-logo.png"
+       width="110"
+       alt="AI-Powered Market Analysis logo" />
+</p>
 
-This project turns publicly available U.S. equity prices and 10-year Treasury
-yields into a reproducible market-structure report. It measures whether S&P 500
-performance has broad participation, classifies SPY trend conditions, and
-estimates how sector ETFs have been associated with yield changes. A
-deterministic Pandas/NumPy pipeline writes validated quantitative artifacts
-first; an optional OpenAI layer interprets those artifacts without recalculating
-them.
+<h1 align="center">AI-Powered Market Analysis</h1>
 
-This report is for research and educational purposes only and does not
-constitute investment advice.
+<p align="center">
+  Quantitative market intelligence with evidence-grounded AI interpretation.
+</p>
 
-## Features
+<p align="center">
+  <a href="https://ai-powered-market-analysis.vercel.app"><strong>Live product</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://ai-powered-market-analysis.vercel.app">ai-powered-market-analysis.vercel.app</a>
+</p>
 
-- S&P 500 market breadth from current constituents with complete moving-average windows
-- SPY trend regime from accepted SMA20 / SMA50 / SMA200 structure
-- Sector Treasury-yield sensitivity with one-factor OLS and HC3 inference
-- Structured, evidence-grounded AI interpretation of validated JSON only
-- Deterministic tests, cached reruns, and graceful degradation when OpenAI is unavailable
+<p align="center">
+  <em>The quantitative engine computes the evidence. The AI interprets it.</em>
+</p>
 
-## Architecture
+<p align="center">
+  <img src="docs/images/product-home.png"
+       width="880"
+       alt="Product homepage of AI-Powered Market Analysis" />
+</p>
 
-U.S. equity prices + 10Y Treasury yields  
-→ Pandas/NumPy data pipeline  
-→ breadth and trend signals  
-→ sector rate-sensitivity regressions  
-→ structured quantitative output  
-→ OpenAI API interpretation  
-→ structured market summary  
-→ Markdown report
+A production web product that turns U.S. equity prices and 10-year Treasury
+yields into validated market-structure signals, an interactive research report,
+and a downloadable PDF. Deterministic Pandas / NumPy computation runs first.
+An optional OpenAI layer interprets only that validated output. The model does
+not calculate indicators, moving averages, or regressions.
 
-## Implemented scope
+This is not a notebook demo. The public site is live on Vercel. New
+computation runs in GitHub Actions and publishes to private object storage.
 
-- Current S&P 500 universe acquisition and caching
-- Adjusted equity, SPY, and 11-sector ETF prices
-- FRED DGS10 yields in percentage points
-- Market-breadth and SPY-trend calculations
-- One-factor sector yield-sensitivity regressions with HC3 errors
-- Validated `quant_summary.json`
-- Three deterministic PNG charts
-- Optional grounded OpenAI interpretation → `market_summary.json`
-- Deterministic `market_report.md`
-- CLI orchestration with SUCCESS / PARTIAL / FAILURE exit codes
+---
 
-## Web Dashboard
+## Overview
 
-The v1.2 product shell is a Next.js / TypeScript app in `web/`. It uses
-Recharts to render Market Breadth, SPY Trend, and Sector Rate Sensitivity
-charts from a static validated snapshot in `web/public/data/`. Chart range
-controls (1Y / 3Y / 5Y) only filter already-exported dates.
+The system produces:
 
-The browser does not hold an OpenAI key and does not call OpenAI. Public
-visitors can inspect the latest snapshot. `POST /api/run-analysis` is an
-owner-authorized server route that may later dispatch GitHub Actions. It
-does not run Python in Next.js. Live dispatch is not configured by default.
+- validated quantitative market signals
+- interactive charts and a research report
+- evidence-grounded AI interpretation
+- a downloadable PDF
 
-```bash
-python -m src.main --run-id web-live-snapshot --export-web-snapshot
-cd web
-npm install
-npm run dev
+Pipeline:
+
+```
+Market data
+  → deterministic quantitative computation
+  → typed validation
+  → evidence pack
+  → grounded AI interpretation
+  → interactive report / PDF
 ```
 
-See `docs/v1.2_run_architecture.md`. Vercel is not live.
+AI is strictly downstream of quantitative validation. If interpretation is
+unavailable, the quantitative artifacts remain valid.
 
-## Example Outputs
+---
 
-The charts below are documentation samples of the three run artifacts. Live
-runs write the same filenames under `outputs/<run_id>/` and are not committed.
+## What the System Analyzes
 
-![S&P 500 market breadth](docs/images/breadth_timeseries.png)
+### Market Breadth
 
-![SPY trend structure](docs/images/spy_trend.png)
+Current S&P 500 constituents (complete moving-average windows only):
 
-![Sector Treasury-yield sensitivity](docs/images/sector_rate_beta.png)
+- share of names strictly above their 50DMA and 200DMA
+- advancers / decliners and the advance-decline ratio
+- 20-observation breadth momentum (`pct_above_50dma` change)
 
-- `breadth_timeseries.png`
-- `spy_trend.png`
-- `sector_rate_beta.png`
+### SPY Trend Structure
 
-## Out of scope
+Complete-window SMA20, SMA50, and SMA200, plus distance to each average.
+Regimes use strict inequalities (`strong_uptrend`, `uptrend`, `transition`,
+`downtrend`, `strong_downtrend`, or `insufficient_data`). No composite score
+is computed.
 
-The project does not include RAG, vector databases, embeddings, LangChain,
-LangGraph, autonomous agents, FastAPI / Flask, AWS / cloud
-deployment, Docker / Kubernetes, broker integration, automated trading,
-portfolio optimization, backtesting trading strategies, real-time /
-high-frequency market data, predictive return models, or individual stock
-recommendations.
+### Sector Rate Sensitivity
 
-## Repository structure
-
-- `config/default.yaml`: typed defaults and canonical yield unit
-- `src/main.py`: CLI orchestration
-- `src/pipeline.py`: end-to-end stage runner
-- `src/config.py`: CLI > environment > YAML configuration
-- `src/data_loader.py`: providers, cache, acquisition metadata
-- `src/preprocessing.py`: canonical validation and transforms
-- `src/breadth.py`: participation and advance/decline formulas
-- `src/trend.py`: SPY SMAs, distances, and regimes
-- `src/regression.py`: isolated one-factor OLS with HC3 inference
-- `src/quant_pipeline.py`: quantitative assembly and `quant_summary.json`
-- `src/visualization.py`: three headless PNG charts
-- `src/interpretation.py`: optional OpenAI interpretation
-- `src/reporting.py`: deterministic Markdown assembly
-- `src/fixture_data.py`: developer/demo synthetic data only
-- `tests/`: deterministic tests; no live providers by default
-- `docs/acceptance.md`: fixture and real-data acceptance evidence
-- `docs/web_data_contract.md`: v1.1 static snapshot contract
-- `docs/images/`: documentation-only sample charts
-- `src/web_export.py`: optional static snapshot for the web dashboard
-- `web/`: Next.js dashboard (static snapshot, no API)
-- `web/public/data/`: presentation snapshot written only with `--export-web-snapshot`
-- `data/raw/`: ignored CSV caches
-- `outputs/`: ignored run artifacts
-
-## Data sources
-
-- Current S&P 500 membership: the public Wikipedia constituent table. Symbols
-  are normalized for Yahoo Finance (for example, `BRK.B` becomes `BRK-B`).
-- Equity, SPY, and the 11 sector ETF prices: `yfinance`.
-- Ten-year Treasury yield: FRED series `DGS10` through
-  `pandas-datareader`.
-
-Vendor-specific columns are converted into these internal contracts:
-
-- Equities and sectors: `date`, `ticker`, `adjusted_close`
-- SPY: `date`, `adjusted_close`
-- DGS10: `date`, `yield_percent`
-- Price returns add `equity_return`
-- Yield changes add `yield_change`
-
-Price downloads explicitly request `auto_adjust=False` and use `Adj Close`.
-`Close` is accepted only when a provider explicitly marks it as already
-adjusted; the selected treatment is recorded in metadata.
-
-`yield_percent` remains in percentage points: `4.25` means 4.25 percent, not
-`0.0425`. Therefore, a move from `4.30` to `4.35` produces a `yield_change` of
-`0.05` percentage points.
-
-Daily observations are used. Dates are timezone-naive midnight dates sorted
-ascending. No missing prices or returns are fabricated. Legitimate missing
-DGS10 levels are not forward-filled.
-
-## Survivorship-bias limitation
-
-Historical breadth analysis using the CURRENT S&P 500 constituent universe is
-subject to survivorship bias. The system does not use point-in-time membership.
-
-## Market breadth
-
-`src/breadth.py` consumes canonical multi-ticker adjusted prices and calculates:
-
-- `pct_above_50dma`: stocks strictly above their complete 50-observation SMA,
-  divided by stocks with a valid SMA50, multiplied by 100.
-- `pct_above_200dma`: stocks strictly above their complete 200-observation SMA,
-  divided by stocks with a valid SMA200, multiplied by 100.
-- `advancers`: valid simple returns greater than zero.
-- `decliners`: valid simple returns less than zero.
-- `advance_decline_ratio`: advancers divided by decliners; missing when there
-  are zero decliners.
-- `net_advances`: advancers minus decliners.
-- `breadth_momentum_20d`: current `pct_above_50dma` minus the value 20 ordered
-  breadth observations earlier, in percentage points.
-
-Only stocks with a complete moving-average window enter the corresponding
-denominator. A price exactly equal to its SMA is not above it.
-
-## SPY market trend
-
-`src/trend.py` computes complete-window arithmetic `sma_20`, `sma_50`, and
-`sma_200`. Distance uses `adjusted_close / SMA - 1` and is not multiplied by
-100.
-
-Regimes use strict inequalities in this priority:
-
-- `strong_uptrend`: `SPY > SMA20 > SMA50 > SMA200`
-- `strong_downtrend`: `SPY < SMA20 < SMA50 < SMA200`
-- `uptrend`: `SPY > SMA50` and `SMA50 > SMA200`, unless already strong
-- `downtrend`: `SPY < SMA50` and `SMA50 < SMA200`, unless already strong
-- `transition`: inconsistent directions, plus full-data equality boundaries
-- `insufficient_data`: price or any required SMA is missing
-
-`SPY == SMA50` or `SMA50 == SMA200` produces `transition` when all values are
-available.
-
-## Sector rate-sensitivity regression
-
-For each configured sector ETF, `src/regression.py` estimates:
+Eleven sector ETFs versus daily changes in FRED `DGS10`. One-factor OLS:
 
 `sector_return = alpha + beta_yield * yield_change + error`
 
-Each one-factor OLS model uses common valid dates and the most recent 252
-aligned observations. Between 200 and 251 observations are accepted; fewer
-than 200 produce `insufficient_data`.
+HC3 robust inference, `p < 0.05` significance labels, and a 10bp effect
+(`beta_yield * 0.10`). Results describe association, not causation.
 
-Inference uses HC3 heteroskedasticity-robust standard errors. Significance
-uses `p < 0.05`. Because 10 basis points equals 0.10 percentage points,
-`effect_10bp = beta_yield * 0.10`.
+### Grounded AI Interpretation
 
-Allowed labels: `positive_significant`, `negative_significant`,
-`positive_not_significant`, `negative_not_significant`, `insufficient_data`.
+Consumes a validated `QuantSummary` only. Structured output must cite
+evidence-pack paths. The model is instructed not to recompute metrics or
+invent values. Missing keys, timeouts, or invalid output yield
+`status: unavailable` without discarding the quantitative run.
 
-These results describe association and exposure, not causation.
+---
 
-## QuantSummary
+## System Architecture
 
-`outputs/<run_id>/quant_summary.json` (`schema_version` `1.0.0`) contains
-`run_metadata`, `data_quality`, `breadth`, `trend`, `sector_regressions`,
-`limitations`, and `status`. The as-of date is the latest date actually shared
-by breadth and trend outputs.
-
-Example:
-
-```json
-{
-  "schema_version": "1.0.0",
-  "status": "success",
-  "run_metadata": {
-    "run_id": "fixture-acceptance",
-    "as_of_date": "2024-02-29",
-    "yield_unit": "percentage_points"
-  },
-  "breadth": {"pct_above_50dma": 60.0, "pct_above_200dma": 40.0},
-  "trend": {"trend_regime": "uptrend"},
-  "sector_regressions": [{"ticker": "XLK", "sensitivity_label": "negative_significant"}]
-}
+```mermaid
+flowchart TD
+  User[User / Browser] --> Next[Next.js on Vercel]
+  Next -->|POST /api/run-analysis| Policy[Reuse / quota / cooldown / access tokens]
+  Policy -->|reuse or join| Report["/r/access_token"]
+  Policy -->|new computation| Auth[Run-scoped publish authorization]
+  Auth --> GHA[GitHub Actions]
+  GHA --> Py[Python quantitative pipeline]
+  Py --> Data[Market data]
+  Data --> Signals[Breadth / trend / HC3 regressions]
+  Signals --> Valid[Typed validation]
+  Valid --> AI[Grounded AI]
+  AI --> Arts[Charts / Markdown / PDF]
+  Arts --> Blob[Private Vercel Blob]
+  Blob --> Report
 ```
 
-Unavailable values are JSON `null`. `NaN` and `Infinity` are rejected.
+- Next.js does not run quantitative calculation.
+- GitHub Actions executes the Python pipeline.
+- Validated artifacts are written to **private** Vercel Blob.
+- Reports resolve only through an opaque access token at `/r/[token]`.
+- Same-day accepted results can be reused so most visitors do not start a
+  new pipeline.
 
-## OpenAI interpretation contract
+`/report` is a labeled sample snapshot from `web/public/data/`. Live runs
+never write into that directory.
 
-`src/interpretation.py` consumes only a validated `QuantSummary`. Successful
-new `market_summary.json` files include:
+---
 
-- `executive_summary`
-- `market_participation`
-- `trend_conditions`
-- `sector_rate_risk`
-- `risks_and_limitations`
-- `evidence` (and `evidence_used`)
-- `disclaimer`
+## Grounded AI Design
 
-OpenAI is optional. Missing keys, `--skip-openai`, timeouts, and invalid
-structured output produce `status: unavailable` without discarding quantitative
-artifacts. Tests mock OpenAI and do not make live API calls.
+The LLM is not the source of quantitative truth.
 
-Example unavailable artifact:
-
-```json
-{
-  "run_id": "fixture-acceptance",
-  "as_of_date": "2024-02-29",
-  "status": "unavailable",
-  "reason": "skipped",
-  "executive_summary": null
-}
+```
+Raw market data
+  → deterministic metrics
+  → QuantSummary
+  → validation / evidence contract
+  → structured AI interpretation
 ```
 
-## Visualizations
+`src/interpretation.py` sends a validated evidence pack. Prompts forbid
+recomputation, invented prices, and trading advice. Evidence items must use
+exact `source_section` and `metric` paths from the pack.
 
-Under `outputs/<run_id>/`:
+If `OPENAI_API_KEY` is missing, `--skip-openai` is set, or the model fails
+validation, the run still keeps `quant_summary.json`, series, and charts. The
+report surfaces AI as unavailable. Tests mock the OpenAI client; they do not
+call the live API by default.
 
-- `breadth_timeseries.png`
-- `spy_trend.png`
-- `sector_rate_beta.png`
+---
 
-Charts consume precomputed series and validated sector records. They do not
-recalculate indicators. Unexpected chart failures keep `quant_summary.json`
-and mark the run PARTIAL; the report notes missing images.
+## Production Run Architecture
 
-## Report structure
+Public `POST /api/run-analysis` (no login, no owner password):
 
-`market_report.md` headings:
+1. Reuse today's accepted bundle if it is still the latest completed NYSE
+   session, and mint a new visitor token.
+2. Otherwise join an in-flight run.
+3. Otherwise apply a hashed-client cooldown and a daily new-run quota.
+4. Otherwise queue a new `run_id`, mint an access alias, and dispatch Actions.
 
-1. `# AI-Powered Market Analysis System`
-2. `## Executive Summary`
-3. `## Market Participation`
-4. `## Trend Conditions`
-5. `## Sector Rate Sensitivity`
-6. `## Data Quality`
-7. `## Methodology and Limitations`
-8. `## Disclaimer`
+The Vercel server uses Blob OIDC (`BLOB_STORE_ID`) for private store I/O.
+For a new run it issues short-lived, **exact-pathname** PUT URLs via
+`issueSignedToken` + `presignUrl` for `analysis/<run_id>/` artifacts only.
+Actions receives that JSON capability — not a Blob master token, not Vercel
+account credentials, and not write access to `control/` or `access/`.
 
-Report generation does not call OpenAI.
+After upload, the worker calls `POST /api/internal/finalize-run` with a
+one-time nonce. Vercel writes reusable-daily state and releases the active
+lock. Publish authorization expires (45 minutes). The workflow masks
+`ACCESS_TOKEN` and `PUBLISH_AUTHORIZATION` before later steps.
 
-## Installation
+The browser never receives OpenAI keys, Blob tokens, OIDC material, or
+publish URLs.
 
-Python 3.11 or newer is required.
+---
+
+## Security Model
+
+| Control | Behavior |
+| --- | --- |
+| Compute isolation | Python runs in GitHub Actions, not in the browser or Next.js |
+| Blob auth | Server OIDC; worker gets per-file signed PUTs for one `run_id` |
+| Control plane | Vercel writes `control/*`; the worker cannot |
+| Report access | `/r/<access_token>` and PDF/status APIs resolve aliases server-side |
+| No catalog | No bucket listing or public “latest report” index |
+| Abuse | Cooldown, UTC daily quota, one active computation, daily reuse |
+| Secrets | OpenAI key is an Actions secret; no `NEXT_PUBLIC_` infrastructure secrets |
+
+Optional `POST /api/admin/refresh-analysis` can force a new pipeline. It is
+not shown in the public UI.
+
+Details: [docs/live_run_delivery.md](docs/live_run_delivery.md).
+
+---
+
+## Interactive Report
+
+Token-scoped live reports and the labeled `/report` sample share the same
+research layout:
+
+- Overall Market State (accepted trend regime and breadth headlines)
+- Grounded AI Market Brief (or an honest unavailable state)
+- Market breadth, SPY trend, and sector-rate charts (1Y / 3Y / 5Y slice
+  already-exported dates; they do not recompute)
+- Data quality
+- Technical appendix
+- Downloadable PDF
+
+<p align="center">
+  <img src="docs/images/breadth_timeseries.png" width="280" alt="S&P 500 market breadth chart" />
+  <img src="docs/images/spy_trend.png" width="280" alt="SPY trend structure chart" />
+  <img src="docs/images/sector_rate_beta.png" width="280" alt="Sector Treasury-yield sensitivity chart" />
+</p>
+
+---
+
+## Tech Stack
+
+**Quantitative / data:** Python 3.11, Pandas, NumPy, statsmodels, yfinance,
+FRED via pandas-datareader, Matplotlib / Seaborn, ReportLab
+
+**AI:** OpenAI API, Pydantic structured output and schema validation
+
+**Web:** Next.js, React, TypeScript, Recharts
+
+**Infrastructure:** Vercel, private Vercel Blob, GitHub Actions, OIDC and
+run-scoped signed upload capabilities
+
+**Engineering:** pytest, ruff, black, ESLint, TypeScript `tsc`, Next.js
+production build
+
+Not used: LangChain, LangGraph, RAG, vector databases, FastAPI, Docker, AWS.
+
+---
+
+## Testing & Reliability
+
+Python and frontend suites cover:
+
+- deterministic breadth, trend, and HC3 regression contracts
+- typed `QuantSummary` / interpretation schemas
+- AI graceful degradation and evidence-path validation
+- mocked provider and OpenAI calls
+- public reuse, freshness, quota, and cooldown policy
+- run-scoped publish authorization, expiry, and finalize
+- chart/data-contract tests (no fabricated zeros)
+- `typecheck`, ESLint, and production `next build`
+
+```bash
+pip install -e ".[dev]"
+pytest
+ruff check .
+black --check src tests
+
+cd web
+npm install
+npm run test:charts
+npm run typecheck
+npm run lint
+npm run build
+```
+
+---
+
+## Repository Structure
+
+```
+.
+├── src/            # Python quantitative + AI pipeline
+├── tests/          # Python tests
+├── web/            # Next.js product
+├── docs/           # architecture and acceptance documentation
+├── config/         # quantitative configuration
+├── data/           # ignored runtime/cache data
+├── outputs/        # ignored run artifacts
+└── .github/        # GitHub Actions compute workflow
+```
+
+Important entry points: `src/main.py`, `src/pipeline.py`,
+`src/quant_pipeline.py`, `src/interpretation.py`, `src/live_run_publish.py`,
+`web/src/lib/run-trigger.ts`, `.github/workflows/run-market-analysis.yml`.
+
+---
+
+## Running Locally
+
+Local analysis is separate from production live-run infrastructure (Vercel
+OIDC, Blob, and Actions).
+
+**Python (3.11)**
 
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev]"
+pip install -e ".[dev]"
 cp .env.example .env
+python -m src.main --run-id local-demo
 ```
 
-## Environment variables
+`OPENAI_API_KEY` is optional. Without it, interpretation is unavailable and
+quantitative outputs still write under `outputs/<run_id>/`.
 
-Configuration precedence is CLI overrides, then environment variables, then
-`config/default.yaml`.
-
-- `OPENAI_API_KEY` (optional)
-- `OPENAI_MODEL` (optional)
-- `MARKET_ANALYSIS_REGRESSION_WINDOW`
-- `MARKET_ANALYSIS_MIN_REGRESSION_OBS`
-- `MARKET_ANALYSIS_BENCHMARK_TICKER`
-- `MARKET_ANALYSIS_RAW_DATA_DIRECTORY`
-- `MARKET_ANALYSIS_TREASURY_SERIES`
-- `MARKET_ANALYSIS_OUTPUT_DIRECTORY`
-- `MARKET_ANALYSIS_LOG_LEVEL`
-
-`.env.example` contains names only. Real credentials belong in the ignored
-`.env` file. Secrets are not logged.
-
-## CLI usage
-
-```bash
-python -m src.main
-python -m src.main --skip-openai
-python -m src.main --start-date 2021-01-04 --end-date 2026-09-11
-python -m src.main --force-refresh --output-dir outputs --run-id my-run
-python -m src.main --fixture --skip-openai --run-id fixture-acceptance
-python -m src.main --run-id web-live-snapshot --export-web-snapshot
-```
-
-Supported flags: `--config`, `--start-date`, `--end-date`, `--force-refresh`,
-`--output-dir`, `--run-id`, `--skip-openai`, `--export-web-snapshot`,
-`--web-snapshot-dir`, `--fixture`, `--log-level`.
-
-`--export-web-snapshot` is the only path that writes `web/public/data/`. It
-runs after the accepted v1.0 artifacts exist and serializes already-computed
-breadth/trend frames. A web-export failure leaves those v1.0 artifacts in
-place and records a warning (PARTIAL). Use `--web-snapshot-dir` to write
-somewhere other than the dashboard folder.
-
-Default live dates are approximately five complete years through the most
-recent completed weekday; the published as-of date remains data-derived.
-
-`--fixture` is a developer/demo path using deterministic synthetic data. It
-does not contact market-data providers. Unless a test injects a mock completer,
-fixture mode skips OpenAI.
-
-`--skip-openai` runs all deterministic stages, writes `market_summary.json`
-with `status: unavailable` and `reason: skipped`, writes `market_report.md`,
-and makes no OpenAI network calls. Exit status is PARTIAL.
-
-## Cache behavior
-
-Canonical files under ignored `data/raw/` are reused unless `--force-refresh`.
-Each CSV has a `.metadata.json` sidecar. Fixture/demo runs write to
-`data/raw/_fixture/` so they cannot overwrite production caches.
-
-## Output directory
-
-```
-outputs/<run_id>/
-├── quant_summary.json
-├── breadth_timeseries.png
-├── spy_trend.png
-├── sector_rate_beta.png
-├── market_summary.json
-└── market_report.md
-```
-
-One `run_id` identifies every artifact from a single execution.
-
-## Exit codes
-
-- `0` SUCCESS: quantitative success, charts written, interpretation available, report written
-- `1` FAILURE: critical data/quant failure, or report could not be written
-- `2` PARTIAL: quantitative artifacts valid, but OpenAI skipped/failed, a chart failed, web snapshot export failed, or quant status is partial
-
-Critical quantitative failure does not call OpenAI and does not write a
-misleading `quant_summary.json` or report.
-
-Unexpected visualization failure retains `quant_summary.json`, records a
-warning, allows missing-image report notes, and returns PARTIAL.
-
-Unexpected `market_report.md` write failure retains upstream JSON/PNG files
-and returns FAILURE.
-
-## Web dashboard commands
+**Web UI**
 
 ```bash
 cd web
 npm install
 npm run dev
-npm run typecheck
-npm run lint
-npm run build
-npm run test:charts
 ```
 
-The browser loads only files under `web/public/data/`. It does not call OpenAI
-or any application API. Vercel should use Root Directory `web` and
-`npm run build`, with no secrets.
+The local app serves the product shell and the labeled sample at `/report`.
+Production Start Analysis requires the deployed Vercel + Actions path.
 
-## Testing
+---
 
-```bash
-pytest
-pytest --cov=src --cov-report=term-missing
-ruff check .
-black --check src tests
-```
+## Methodology
 
-Core quantitative modules are expected to remain at or above 80% line
-coverage. Deterministic tests do not contact Yahoo Finance, Wikipedia, FRED,
-or OpenAI.
+Compressed facts; full contracts live in `docs/`.
 
-## Error handling
+- **Survivorship:** breadth uses the *current* S&P 500 list, not
+  point-in-time membership.
+- **Breadth:** complete SMA windows only; price equal to its SMA is not
+  “above.”
+- **Trend:** priority-ordered strict SMA inequalities; equality falls to
+  `transition` when all values exist.
+- **Sectors:** last 252 aligned observations when possible; 200–251
+  accepted; fewer than 200 is `insufficient_data`.
+- **Yields:** `DGS10` stays in percentage points (`4.25` is 4.25%, not
+  0.0425). A move from 4.30 to 4.35 is `0.05`.
+- **Association ≠ causation.** No forecasts or trade recommendations.
 
-- Missing or invalid configuration → FAILURE
-- Provider/cache/schema-critical data errors → FAILURE, no OpenAI
-- Valid quant + skipped/failed OpenAI → PARTIAL, unavailable `market_summary.json`, report still generated
-- Valid quant + successful OpenAI + report → SUCCESS
+Deeper reading:
 
-## Methodological limitations
+- [docs/acceptance.md](docs/acceptance.md)
+- [docs/web_data_contract.md](docs/web_data_contract.md)
+- [docs/live_run_delivery.md](docs/live_run_delivery.md)
+- [docs/v1.2_run_architecture.md](docs/v1.2_run_architecture.md)
 
-- Current-universe survivorship bias
-- Sector regressions are association, not causation
-- One-factor daily models omit other market and macro factors
-- Cache and provider gaps can reduce coverage
-- OpenAI output is constrained to supplied quantitative evidence
+---
 
-## Investment disclaimer
+## Disclaimer
 
-This report is for research and educational purposes only and does not
-constitute investment advice. It does not provide buy/sell calls, position
-sizing, expected returns, or portfolio recommendations.
-
-## Resume ↔ Implementation mapping
-
-Resume statement:
-
-> Built a Pandas/NumPy market-data pipeline integrating U.S. equity prices
-> and 10-year Treasury yields to compute breadth and trend signals and run
-> regressions measuring sector exposure to yield changes. Integrated the
-> OpenAI API to interpret indicators and regression outputs and generate
-> structured summaries of market participation, trend conditions, and
-> sector-level interest-rate risk.
-
-| Claim | Source module | Structured output | Evidence |
-| --- | --- | --- | --- |
-| Pandas/NumPy market-data pipeline | `data_loader.py`, `preprocessing.py`, `quant_pipeline.py` | canonical frames and `quant_summary.json` | `tests/test_data_loader.py`, `tests/test_preprocessing.py`, `tests/test_quant_pipeline.py`, `tests/test_integration.py` |
-| U.S. equity prices | `data_loader.py` / `preprocessing.py` | `date`, `ticker`, `adjusted_close` | equity/SPY/sector fixtures and loader tests |
-| 10-year Treasury yields | `data_loader.py` / `preprocessing.py` | `yield_percent`, `yield_change` | DGS10 tests |
-| Breadth signals | `breadth.py` | `quant_summary.breadth`, `breadth_timeseries.png` | `tests/test_breadth.py`, visualization tests |
-| Trend signals | `trend.py` | `quant_summary.trend`, `spy_trend.png` | `tests/test_trend.py` |
-| Sector exposure regressions | `regression.py` | `quant_summary.sector_regressions`, `sector_rate_beta.png` | `tests/test_regression.py` |
-| OpenAI API | `interpretation.py`, `llm_analyzer.py` | `market_summary.json` | mocked `tests/test_interpretation.py` |
-| Market participation | interpretation + reporting | `market_summary.market_participation` | report + integration tests |
-| Trend conditions | interpretation + reporting | `market_summary.trend_conditions` | report + integration tests |
-| Sector-level interest-rate risk | interpretation + reporting | `market_summary.sector_rate_risk` | report + integration tests |
-| Structured summaries | reporting | `market_summary.json`, `market_report.md` | `tests/test_reporting.py`, `tests/test_integration.py` |
+Research and educational use only. Not investment advice. Statistical
+associations are not forecasts or trading recommendations.
