@@ -11,7 +11,9 @@
 </p>
 
 <p align="center">
-  <a href="https://ai-powered-market-analysis.vercel.app"><img src="docs/readme/live-product.png" alt="Open live product" height="46" /></a>&nbsp;&nbsp;<a href="https://github.com/yanchenliu-joe/ai-powered-market-analysis-system"><img src="docs/readme/source-code.png" alt="View source code" height="46" /></a>
+<a href="https://ai-powered-market-analysis.vercel.app"><img src="docs/readme/live-product.png" alt="Open live product" height="46"></a>
+&nbsp;&nbsp;
+<a href="https://github.com/yanchenliu-joe/ai-powered-market-analysis-system/tree/main"><img src="docs/readme/source-code.png" alt="View source code" height="46"></a>
 </p>
 
 <p align="center">
