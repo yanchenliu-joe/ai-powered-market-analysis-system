@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -44,6 +45,13 @@ export function Navbar({
     <header className="navbar">
       <div className="navbar-inner">
         <Link className="navbar-brand" href="/">
+          <Image
+            className="navbar-brand-logo"
+            src="/brand/market-analysis-logo.png"
+            alt=""
+            width={24}
+            height={24}
+          />
           AI-Powered Market Analysis
         </Link>
         <nav className="navbar-links" aria-label="Primary navigation">

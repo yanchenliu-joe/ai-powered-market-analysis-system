@@ -543,11 +543,26 @@ details summary {
 }
 
 .navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5625rem;
   color: var(--ink);
   text-decoration: none;
   font-weight: 600;
   letter-spacing: -0.03em;
   white-space: nowrap;
+}
+
+.navbar-brand-logo {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  object-fit: contain;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .navbar-links {
@@ -1903,6 +1918,12 @@ th {
   .navbar-inner {
     display: flex;
     justify-content: space-between;
+  }
+
+  .navbar-brand-logo {
+    width: 21px;
+    height: 21px;
+    flex-basis: 21px;
   }
 
   .navbar-links {
